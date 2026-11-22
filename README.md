@@ -1,19 +1,69 @@
-# Pad Battery Tray
+# XInputPadIndicator
 
-XInput 패드(최대 4대)의 배터리 잔량을 트레이 아이콘으로 보여 주는 단일 exe 앱. 런타임 의존이 없다.
+Xbox 계열(XInput) 패드의 배터리 잔량을 작업 표시줄 트레이 아이콘으로 보여 주는 Windows 앱이다. 단일 exe라 설치나 런타임이 필요 없다.
 
-- 아이콘: 연결 없음 · 대기 · 유선 · 비어 있음 · 낮음 · 보통 · 가득
-- 2대 이상이면 5초마다 슬롯을 순환하고 아이콘 오른쪽 아래에 슬롯 번호를 찍는다
-- 툴팁: 연결된 패드를 `P1: 보통` 형식으로 한 줄씩
-- 낮음(또는 비어 있음)으로 내려가면 알림을 한 번 띄운다. 가득 또는 유선 연결 뒤에만 다시 알린다
-- 우클릭 메뉴: Windows 시작 시 실행(HKCU `Run`), 배터리 부족 알림, 알림 기준, 종료
-- 설정: `%APPDATA%\PadBatteryTray\settings.ini`
+## 지원 환경
 
-지원: Windows 10/11 x64. Xbox 무선 어댑터, USB 유선, Xbox 360 무선 수신기. 블루투스 Series X|S와 비XInput 패드는 제외.
+- Windows 10/11 x64
+- 패드 최대 4대
 
-## 빌드
+| 연결 방식 | 지원 |
+|---|---|
+| Xbox 무선 어댑터(USB 동글) | 지원 |
+| USB 유선 | 지원(잔량 대신 `유선`으로 표시) |
+| Xbox 360 무선 수신기 | 지원 |
+| 블루투스(Series X\|S) | 미지원(Windows가 잔량을 제대로 보고하지 않음) |
+| 블루투스(One S) | 동작하면 표시하지만 보장하지 않음 |
+| DualSense 등 비XInput 패드 | 미지원 |
 
-Windows(MSVC):
+## 사용법
+
+`pad-battery-tray.exe`를 실행하면 트레이에 아이콘이 나타난다. 창은 없다. 이미 실행 중이면 새로 띄우지 않는다.
+
+### 아이콘
+
+| 아이콘 | 의미 |
+|---|---|
+| 줄 그은 회색 배터리 | 연결된 패드 없음 |
+| 점 세 개 | 연결 직후 잔량 확인 중 |
+| 번개 | 유선 연결 |
+| 빨간 빈 배터리 | 비어 있음 |
+| 주황 1칸 | 낮음 |
+| 흰색 2칸 | 보통 |
+| 초록 가득 | 가득 |
+
+- 패드가 2대 이상이면 5초마다 다음 패드로 아이콘이 바뀌고, 오른쪽 아래에 슬롯 번호(1~4)가 붙는다.
+- 아이콘에 마우스를 올리면 연결된 패드 전체가 `P1: 보통` 형식으로 나온다.
+- 잔량은 Windows가 주는 4단계(비어 있음·낮음·보통·가득)뿐이라 퍼센트는 표시하지 않는다.
+
+### 배터리 부족 알림
+
+잔량이 `낮음`으로 내려가면 Windows 알림을 한 번 띄운다. 같은 패드는 `가득`이 되거나 유선으로 연결한 뒤에만 다시 알린다. 앱을 켤 때 이미 낮은 패드가 있으면 그때 한 번 알린다.
+
+집중 지원이나 게임 모드에서는 Windows가 알림을 숨길 수 있다. 이때도 트레이 아이콘으로 상태를 확인할 수 있다.
+
+### 우클릭 메뉴
+
+| 메뉴 | 동작 |
+|---|---|
+| Windows 시작 시 실행 | 로그인할 때 자동으로 실행한다. 관리자 권한은 필요 없다 |
+| 배터리 부족 알림 | 알림을 켜거나 끈다 |
+| 알림 기준 | `낮음부터` 또는 `비어 있을 때만` |
+| 종료 | 앱을 끝낸다 |
+
+설정은 `%APPDATA%\PadBatteryTray\settings.ini`에 저장되어 다시 실행해도 유지된다.
+
+exe를 다른 폴더로 옮겼다면 메뉴에서 `Windows 시작 시 실행`을 다시 켠다.
+
+### 제거
+
+1. 우클릭 메뉴에서 `Windows 시작 시 실행`을 끈다.
+2. `종료`한다.
+3. exe와 `%APPDATA%\PadBatteryTray` 폴더를 지운다.
+
+## 직접 빌드
+
+Windows:
 
 ```
 cargo build --release
@@ -27,33 +77,8 @@ sudo apt-get install mingw-w64
 cargo build --release --target x86_64-pc-windows-gnu
 ```
 
-테스트(순수 로직, 어느 OS에서나):
-
-```
-cargo test
-```
-
-아이콘을 바꾸려면 `tools/gen_icons.py`를 고치고 `python3 tools/gen_icons.py`로 `assets/icons/*.ico`를 다시 만든다(Pillow 8.1+).
-
-## 구조
-
-| 모듈 | 책임 |
-|---|---|
-| `battery` | `XInputGetBatteryInformation` 호출. `BatterySource` 트레이트 뒤에 있어 테스트에서 가짜 구현을 쓴다 |
-| `state` | 원시값 → 표시 상태, 알림 판단, 슬롯 순환, 툴팁 문자열. 순수 로직 |
-| `badge` | 아이콘 픽셀에 슬롯 번호를 찍는다. 순수 로직 |
-| `settings` | 설정 파일과 자동 시작 레지스트리 |
-| `tray` | `Shell_NotifyIconW`, 아이콘 로드·캐시 |
-| `app` | 숨김 최상위 창, 타이머, 메시지 처리, 메뉴 |
-
-## 클린룸
-
-기존 XB1ControllerBatteryIndicator(GPL-2.0)의 소스·리소스·문자열을 참조하지 않고, 아래 공개 문서만으로 작성했다. 아이콘은 `tools/gen_icons.py`로 새로 그렸다.
-
-- Microsoft Learn: `XInputGetBatteryInformation`, `XINPUT_BATTERY_INFORMATION`
-- Microsoft Learn: `Shell_NotifyIconW`, `NOTIFYICONDATAW`, `LoadIconWithScaleDown`, `WM_DEVICECHANGE`
-- `windows` crate 문서
+결과물은 `target/.../release/pad-battery-tray.exe`다.
 
 ## 라이선스
 
-MIT
+MIT © KGH
