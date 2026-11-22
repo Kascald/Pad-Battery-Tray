@@ -1,0 +1,38 @@
+#pragma code_page(65001)
+#include <winres.h>
+
+// ID는 src/tray.rs 의 icon_resource_id 와 맞춘다. 1번이 exe 아이콘이 된다.
+1   ICON "../assets/icons/full.ico"
+101 ICON "../assets/icons/none.ico"
+102 ICON "../assets/icons/pending.ico"
+103 ICON "../assets/icons/wired.ico"
+104 ICON "../assets/icons/empty.ico"
+105 ICON "../assets/icons/low.ico"
+106 ICON "../assets/icons/medium.ico"
+107 ICON "../assets/icons/full.ico"
+
+CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "app.manifest"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     0,1,0,0
+PRODUCTVERSION  0,1,0,0
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_APP
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "041204B0"
+    BEGIN
+      VALUE "FileDescription", "Pad Battery Tray"
+      VALUE "ProductName",     "Pad Battery Tray"
+      VALUE "FileVersion",     "0.1.0"
+      VALUE "ProductVersion",  "0.1.0"
+      VALUE "OriginalFilename","pad-battery-tray.exe"
+      VALUE "LegalCopyright",  "MIT License"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x0412, 1200
+  END
+END
