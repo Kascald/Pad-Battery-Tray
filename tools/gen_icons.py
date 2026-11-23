@@ -1,4 +1,4 @@
-"""상태별 트레이 아이콘 7종을 assets/icons/*.ico 로 생성한다.
+"""상태별 트레이 아이콘 7종을 assets/icons/*.ico 로, README용 미리보기를 docs/icons/*.png 로 생성한다.
 
 좌표는 16px 격자 기준이고, 각 크기를 8배 슈퍼샘플링으로 따로 그린 뒤 축소한다.
 실행: python3 tools/gen_icons.py  (Pillow 8.1 이상)
@@ -9,7 +9,10 @@ from PIL import Image, ImageDraw
 
 SIZES = [16, 20, 24, 32, 40, 48]
 SS = 8
-OUT = Path(__file__).resolve().parent.parent / "assets" / "icons"
+ROOT = Path(__file__).resolve().parent.parent
+OUT = ROOT / "assets" / "icons"
+DOCS = ROOT / "docs" / "icons"
+PREVIEW = 32
 
 LIGHT = (232, 232, 232, 255)
 HALO = (24, 24, 24, 150)
@@ -85,8 +88,41 @@ ICONS = {
 }
 
 
+# src/badge.rs 와 같은 3x5 숫자와 외곽선
+GLYPHS = {
+    1: [0b010, 0b110, 0b010, 0b010, 0b111],
+    2: [0b111, 0b001, 0b111, 0b100, 0b111],
+}
+
+
+def stamp(img, digit):
+    size = img.width
+    s = max(1, size // 16)
+    ox, oy = size - 5 * s, size - 7 * s
+    rows = GLYPHS[digit]
+
+    def lit(gx, gy):
+        return 0 <= gx < 3 and 0 <= gy < 5 and rows[gy] & (0b100 >> gx)
+
+    px = img.load()
+    for cy in range(7):
+        for cx in range(5):
+            gx, gy = cx - 1, cy - 1
+            if lit(gx, gy):
+                color = (255, 255, 255, 255)
+            elif any(lit(gx + dx, gy + dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1)):
+                color = (16, 16, 16, 255)
+            else:
+                continue
+            for y in range(s):
+                for x in range(s):
+                    px[ox + cx * s + x, oy + cy * s + y] = color
+    return img
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
+    DOCS.mkdir(parents=True, exist_ok=True)
     for name, painter in ICONS.items():
         images = [render(s, painter) for s in SIZES]
         largest = images[-1]
@@ -96,7 +132,10 @@ def main():
             sizes=[(s, s) for s in SIZES],
             append_images=images[:-1],
         )
-    print(f"{len(ICONS)} icons -> {OUT}")
+        render(PREVIEW, painter).save(DOCS / f"{name}.png")
+    stamp(render(PREVIEW, ICONS["full"]), 1).save(DOCS / "badge-1.png")
+    stamp(render(PREVIEW, ICONS["low"]), 2).save(DOCS / "badge-2.png")
+    print(f"{len(ICONS)} icons -> {OUT}, previews -> {DOCS}")
 
 
 if __name__ == "__main__":

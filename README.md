@@ -37,17 +37,28 @@ Xbox 계열(XInput) 패드의 배터리 잔량을 작업 표시줄 트레이 아
 
 | 아이콘 | 의미 |
 |---|---|
-| 줄 그은 회색 배터리 | 연결된 패드 없음 |
-| 점 세 개 | 연결 직후 잔량 확인 중 |
-| 번개 | 유선 연결 |
-| 빨간 빈 배터리 | 비어 있음 |
-| 주황 1칸 | 낮음 |
-| 흰색 2칸 | 보통 |
-| 초록 가득 | 가득 |
+| <img src="docs/icons/none.png" width="32" alt="연결 없음"> | 연결된 패드 없음 |
+| <img src="docs/icons/pending.png" width="32" alt="대기"> | 연결 직후 잔량 확인 중 |
+| <img src="docs/icons/wired.png" width="32" alt="유선"> | 유선 연결 |
+| <img src="docs/icons/empty.png" width="32" alt="비어 있음"> | 비어 있음 |
+| <img src="docs/icons/low.png" width="32" alt="낮음"> | 낮음 |
+| <img src="docs/icons/medium.png" width="32" alt="보통"> | 보통 |
+| <img src="docs/icons/full.png" width="32" alt="가득"> | 가득 |
+| <img src="docs/icons/badge-1.png" width="32" alt="P1 가득"> <img src="docs/icons/badge-2.png" width="32" alt="P2 낮음"> | 패드 2대 이상일 때 슬롯 번호 |
 
 - 패드가 2대 이상이면 5초마다 다음 패드로 아이콘이 바뀌고, 오른쪽 아래에 슬롯 번호(1~4)가 붙는다.
 - 아이콘에 마우스를 올리면 연결된 패드 전체가 `P1: 보통` 형식으로 나온다.
 - 잔량은 Windows가 주는 4단계(비어 있음·낮음·보통·가득)뿐이라 퍼센트는 표시하지 않는다.
+
+### 데모 모드
+
+패드 없이 아이콘과 알림이 제대로 나오는지 확인할 때 쓴다.
+
+```
+pad-battery-tray.exe --demo
+```
+
+2초마다 모든 아이콘, 2대 연결 시의 번호 순환, 배터리 부족 알림을 차례로 보여 주고 반복한다. 툴팁 첫 줄에 `데모 모드`가 표시된다. 평소 실행과 동시에 띄울 수 있고, 메뉴에서 바꾼 설정은 저장하지 않는다. 우클릭 메뉴의 `종료`로 끝낸다.
 
 ### 배터리 부족 알림
 
