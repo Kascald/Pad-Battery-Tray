@@ -1,4 +1,4 @@
-# XInputPadIndicator
+# Pad Battery Tray
 
 Xbox 계열(XInput) 패드의 배터리 잔량을 작업 표시줄 트레이 아이콘으로 보여 주는 Windows 앱이다. 단일 exe라 설치나 런타임이 필요 없다.
 
