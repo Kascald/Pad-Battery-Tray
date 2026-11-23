@@ -1,4 +1,5 @@
 #![cfg_attr(windows, windows_subsystem = "windows")]
+#![cfg_attr(not(windows), allow(dead_code))]
 
 mod badge;
 mod battery;

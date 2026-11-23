@@ -59,7 +59,6 @@ impl Settings {
     }
 }
 
-#[cfg_attr(not(windows), allow(dead_code))]
 pub fn default_path() -> Option<PathBuf> {
     std::env::var_os("APPDATA").map(|dir| PathBuf::from(dir).join(APP_DIR).join("settings.ini"))
 }

@@ -3,7 +3,7 @@
 //! `TaskbarCreated`와 `WM_DEVICECHANGE`(DBT_DEVNODES_CHANGED)는 최상위 창에만 브로드캐스트되므로
 //! `HWND_MESSAGE` 창 대신 표시하지 않는 `WS_EX_TOOLWINDOW` 최상위 창을 쓴다.
 
-use crate::battery::{BatterySource, XInput};
+use crate::battery::{BatterySource, DemoSource, XInput};
 use crate::settings::{self, autostart, Settings};
 use crate::state::{alert_message, Monitor, Threshold, TrayView};
 use crate::tray::{Tray, WM_TRAY};
@@ -17,6 +17,7 @@ use windows::Win32::UI::WindowsAndMessaging::*;
 
 const POLL_TIMER: usize = 1;
 const POLL_MS: u32 = 5_000;
+const DEMO_POLL_MS: u32 = 2_000;
 const DBT_DEVNODES_CHANGED: usize = 0x0007;
 
 const CMD_AUTOSTART: u32 = 1;
@@ -28,7 +29,8 @@ const CMD_EXIT: u32 = 9;
 struct App {
     tray: Tray,
     monitor: Monitor,
-    source: XInput,
+    source: Box<dyn BatterySource>,
+    demo: bool,
     settings: Settings,
     settings_path: Option<PathBuf>,
     view: Option<TrayView>,
@@ -36,7 +38,10 @@ struct App {
 
 impl App {
     fn refresh(&mut self, advance: bool) {
-        let (view, alerts) = self.monitor.refresh(self.source.read_all(), self.settings.threshold, advance);
+        let (mut view, alerts) = self.monitor.refresh(self.source.read_all(), self.settings.threshold, advance);
+        if self.demo {
+            view.tooltip = format!("데모 모드\n{}", view.tooltip);
+        }
         self.tray.show(&view);
         self.view = Some(view);
         if self.settings.notify {
@@ -81,7 +86,10 @@ pub fn fatal(msg: &str) {
 
 pub fn run() -> Result<()> {
     unsafe {
-        let _mutex = CreateMutexW(None, true, w!(r"Local\PadBatteryTray.Instance"))?;
+        // 데모는 실제 실행과 함께 띄울 수 있도록 뮤텍스를 따로 쓴다
+        let demo = std::env::args().any(|a| a == "--demo");
+        let name = if demo { w!(r"Local\PadBatteryTray.Demo") } else { w!(r"Local\PadBatteryTray.Instance") };
+        let _mutex = CreateMutexW(None, true, name)?;
         if GetLastError() == ERROR_ALREADY_EXISTS {
             return Ok(());
         }
@@ -109,18 +117,20 @@ pub fn run() -> Result<()> {
             None,
         )?;
 
-        let settings_path = settings::default_path();
+        // 데모에서 바꾼 메뉴 설정은 저장하지 않는다
+        let settings_path = if demo { None } else { settings::default_path() };
         let settings = settings_path.as_deref().map(Settings::load).unwrap_or_default();
         APP.set(Some(App {
             tray: Tray::new(hwnd, hinst),
             monitor: Monitor::default(),
-            source: XInput,
+            source: if demo { Box::new(DemoSource::new()) } else { Box::new(XInput) },
+            demo,
             settings,
             settings_path,
             view: None,
         }));
         with_app(|app| app.refresh(false));
-        SetTimer(Some(hwnd), POLL_TIMER, POLL_MS, None);
+        SetTimer(Some(hwnd), POLL_TIMER, if demo { DEMO_POLL_MS } else { POLL_MS }, None);
 
         let mut msg = MSG::default();
         while GetMessageW(&mut msg, None, 0, 0).as_bool() {
