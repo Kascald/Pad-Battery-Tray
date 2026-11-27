@@ -105,4 +105,4 @@ cargo build --release --target x86_64-pc-windows-gnu
 
 ## 라이선스
 
-MIT © KGH
+MIT
